@@ -1,0 +1,235 @@
+.catalog-section {
+  padding: 80px 0;
+  background-color: var(--color-surface);
+}
+
+.catalog-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.category-tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: rgba(255, 107, 129, 0.1);
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.catalog-header h2 {
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  margin-bottom: 8px;
+}
+
+.catalog-header p {
+  font-size: 1.05rem;
+  color: var(--color-text-light);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.category-filters {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.filter-btn {
+  background: #f7f5f4;
+  border: 1.5px solid #eae5e3;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.filter-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(255, 107, 129, 0.3);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 35px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.product-image-container {
+  height: 270px;
+  overflow: hidden;
+  position: relative;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.06);
+}
+
+.card-preorder-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-info {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.product-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--color-text-dark);
+}
+
+.product-description {
+  font-size: 0.92rem;
+  color: #666;
+  line-height: 1.45;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.bouquet-perks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.perk-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 107, 129, 0.08);
+  color: var(--color-primary);
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.product-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.stems-category {
+  margin-top: 100px;
+  padding-top: 60px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.bouquet-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.catalog-category {
+  margin-bottom: 20px;
+}
+
+/* Custom CTA Banner */
+.custom-cta-banner {
+  margin-top: 60px;
+  background: linear-gradient(135deg, #fff0f3 0%, #ffe8f4 100%);
+  border: 1.5px solid rgba(255, 107, 129, 0.2);
+  border-radius: 24px;
+  padding: 36px 40px;
+  box-shadow: 0 8px 32px rgba(255, 107, 129, 0.08);
+}
+
+.custom-cta-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.custom-cta-icon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.custom-cta-content > div {
+  flex: 1;
+  min-width: 200px;
+}
+
+.custom-cta-content h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  margin-bottom: 4px;
+}
+
+.custom-cta-content p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  .custom-cta-banner {
+    padding: 24px 20px;
+  }
+  .custom-cta-content {
+    flex-direction: column;
+    text-align: center;
+  }
+}
