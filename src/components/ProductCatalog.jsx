@@ -74,59 +74,38 @@ function ProductCatalog({ onAddToCart, onGoToBuilder }) {
   const rawFlowers = [
     {
       id: 101,
-      name: "Red Long-Stem Roses",
-      description: "Fresh premium long-stemmed roses (per dozen).",
-      price: 2400,
-      image: "https://images.unsplash.com/photo-1548817292-f045dce7ebc1?auto=format&fit=crop&w=600&q=80"
+      name: "Red Rose",
+      description: "Fresh premium velvety long-stemmed red roses.",
+      price: 250,
+      image: "/flower-red-rose.jpg"
     },
     {
       id: 102,
-      name: "Pink Peonies Bunch",
-      description: "Fresh large-bloom pink peonies (bunch of 5).",
-      price: 1800,
-      image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?auto=format&fit=crop&w=600&q=80"
+      name: "Chrysanthemum",
+      description: "Fresh, vibrant crisp chrysanthemum blooms.",
+      price: 180,
+      image: "/flower-chrysanthemum.jpg"
     },
     {
       id: 103,
-      name: "Golden Sunflowers",
-      description: "Bright cheerful sunflowers (half-dozen stems).",
-      price: 1200,
-      image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?auto=format&fit=crop&w=600&q=80"
+      name: "Lily",
+      description: "Elegant, fragrant oriental lilies.",
+      price: 320,
+      image: "/flower-lily.jpg"
     },
     {
       id: 104,
-      name: "Dutch Spring Tulips",
-      description: "Vibrant assorted spring tulips (bunch of 15).",
-      price: 1500,
-      image: "https://images.unsplash.com/photo-1520763185298-1b434c919102?auto=format&fit=crop&w=600&q=80"
+      name: "Orchid",
+      description: "Exotic, long-lasting premium orchid stems.",
+      price: 400,
+      image: "/flower-orchid.jpg"
     },
     {
       id: 105,
-      name: "White Oriental Lilies",
-      description: "Fragrant pure white lilies (bunch of 5 stems).",
-      price: 2000,
-      image: "https://images.unsplash.com/photo-1508784411316-02b8cd4d3a3a?auto=format&fit=crop&w=600&q=80"
-    },
-    {
-      id: 106,
-      name: "Exotic Orchid Stems",
-      description: "Long-lasting Phalaenopsis orchid stems (per stem).",
-      price: 800,
-      image: "https://images.unsplash.com/photo-1508604925763-7c8ee4bc9129?auto=format&fit=crop&w=600&q=80"
-    },
-    {
-      id: 107,
-      name: "Voluminous Hydrangeas",
-      description: "Cloud-like blue & pink hydrangeas (per stem).",
-      price: 600,
-      image: "https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&w=600&q=80"
-    },
-    {
-      id: 108,
-      name: "Baby's Breath Bunch",
-      description: "Fluffy white filler flowers, beautiful on their own.",
-      price: 500,
-      image: "https://images.unsplash.com/photo-1613589998816-53aeb1a64f4f?auto=format&fit=crop&w=600&q=80"
+      name: "Baby's Breath",
+      description: "Delicate fluffy white cloud filler blooms.",
+      price: 150,
+      image: "/flower-babys-breath.jpg"
     }
   ];
 

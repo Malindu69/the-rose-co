@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import './CustomBuilderPage.css';
 
-// Flower types with images
+// Flower types with exact images
 const FLOWERS = [
-  { id: 'rose-red',     name: 'Red Rose',        emoji: '🌹', image: '/flower-rose.jpg',            priceEach: 250 },
-  { id: 'rose-pink',    name: 'Pink Rose',        emoji: '🌸', image: 'https://images.unsplash.com/photo-1457089328109-e5d9bd499191?auto=format&fit=crop&w=200&q=80', priceEach: 250 },
+  { id: 'rose-red',     name: 'Red Rose',        emoji: '🌹', image: '/flower-red-rose.jpg',        priceEach: 250 },
   { id: 'chrysanthemum',name: 'Chrysanthemum',   emoji: '🌼', image: '/flower-chrysanthemum.jpg',   priceEach: 180 },
-  { id: 'lily',         name: 'Lily',             emoji: '🌷', image: 'https://images.unsplash.com/photo-1508784411316-02b8cd4d3a3a?auto=format&fit=crop&w=200&q=80', priceEach: 320 },
-  { id: 'sunflower',    name: 'Sunflower',        emoji: '🌻', image: 'https://images.unsplash.com/photo-1597848212624-a19eb35e2651?auto=format&fit=crop&w=200&q=80', priceEach: 200 },
-  { id: 'tulip',        name: 'Tulip',            emoji: '🌷', image: 'https://images.unsplash.com/photo-1520763185298-1b434c919102?auto=format&fit=crop&w=200&q=80', priceEach: 220 },
-  { id: 'gypsophila',   name: "Baby's Breath",    emoji: '🤍', image: 'https://images.unsplash.com/photo-1613589998816-53aeb1a64f4f?auto=format&fit=crop&w=200&q=80', priceEach: 120 },
-  { id: 'orchid',       name: 'Orchid',           emoji: '🌺', image: 'https://images.unsplash.com/photo-1508604925763-7c8ee4bc9129?auto=format&fit=crop&w=200&q=80', priceEach: 400 },
+  { id: 'lily',         name: 'Lily',             emoji: '🌷', image: '/flower-lily.jpg',            priceEach: 320 },
+  { id: 'orchid',       name: 'Orchid',           emoji: '🌺', image: '/flower-orchid.jpg',          priceEach: 400 },
+  { id: 'gypsophila',   name: "Baby's Breath",    emoji: '🤍', image: '/flower-babys-breath.jpg',    priceEach: 150 },
 ];
 
 // ── WRAPPING PAPERS (materials/colors — photos of the actual paper texture) ──

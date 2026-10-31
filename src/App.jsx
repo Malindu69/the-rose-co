@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AnnouncementBar from './components/AnnouncementBar';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -10,7 +10,21 @@ import Cart from './components/Cart';
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'builder'
+  const [currentPage, setCurrentPage] = useState(() => {
+    return window.location.pathname === '/builder' || window.location.hash === '#builder' ? 'builder' : 'home';
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.pathname === '/builder' || window.location.hash === '#builder') {
+        setCurrentPage('builder');
+      } else {
+        setCurrentPage('home');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleAddToCart = (product) => {
     setCartItems(prev => {
@@ -64,6 +78,11 @@ function App() {
 
   const navigateTo = (page) => {
     setCurrentPage(page);
+    if (page === 'builder') {
+      window.history.pushState(null, '', '/builder');
+    } else {
+      window.history.pushState(null, '', '/');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
