@@ -278,4 +278,26 @@
   .cart-modal {
     border-radius: 0;
   }
+
+  .cart-header {
+    padding: 16px 18px;
+  }
+
+  .cart-items {
+    padding: 14px 16px;
+  }
+
+  .cart-footer {
+    padding: 16px 18px 24px;
+  }
+
+  .cart-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .cart-item-img {
+    width: 55px;
+    height: 55px;
+  }
 }

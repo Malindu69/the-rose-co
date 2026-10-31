@@ -400,6 +400,21 @@ function CustomBuilderPage({ onAddToCart, onGoBack }) {
           <p className="summary-note">Handcrafted fresh on your chosen date</p>
         </div>
       </div>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="builder-mobile-bar">
+        <div className="mobile-bar-info">
+          <span className="mobile-bar-total">LKR {total.toLocaleString()}</span>
+          <span className="mobile-bar-stems">{totalStems} stem{totalStems !== 1 ? 's' : ''}</span>
+        </div>
+        <button
+          className="btn btn-primary mobile-bar-btn"
+          onClick={handleAddToCart}
+          disabled={totalStems === 0}
+        >
+          {totalStems === 0 ? 'Pick Flowers' : 'Pre-Order 🛒'}
+        </button>
+      </div>
     </div>
   );
 }

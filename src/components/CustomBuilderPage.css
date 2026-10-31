@@ -480,8 +480,57 @@
   margin-top: 10px;
 }
 
+/* ── Mobile Sticky Bottom Bar ────────────────────────────────── */
+.builder-mobile-bar {
+  display: none;
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .builder-mobile-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 107, 129, 0.25);
+    padding: 12px 18px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-bar-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-bar-total {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    line-height: 1.2;
+  }
+
+  .mobile-bar-stems {
+    font-size: 0.78rem;
+    color: #888;
+  }
+
+  .mobile-bar-btn {
+    padding: 10px 22px;
+    font-size: 0.92rem;
+    border-radius: 25px;
+  }
+
+  .builder-page {
+    padding-bottom: 110px;
+  }
+
   .builder-layout {
     grid-template-columns: 1fr;
     padding: 24px 20px 0;
@@ -489,7 +538,8 @@
 
   .builder-summary {
     position: static;
-    order: -1;
+    order: 2; /* Placed after steps for natural mobile review flow */
+    margin-top: 12px;
   }
 
   .builder-header {
@@ -506,6 +556,103 @@
 
   .wrap-type-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .builder-header {
+    padding: 18px 14px 22px;
+  }
+
+  .builder-title-wrap h1 {
+    font-size: 1.7rem;
+  }
+
+  .builder-title-wrap p {
+    font-size: 0.88rem;
+  }
+
+  .builder-layout {
+    padding: 16px 12px 0;
+    gap: 16px;
+  }
+
+  .step-header {
+    padding: 14px 14px;
+    gap: 12px;
+  }
+
+  .step-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .step-header p {
+    font-size: 0.78rem;
+  }
+
+  .step-number {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+
+  .step-content {
+    padding: 0 14px 18px;
+  }
+
+  .flower-picker {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .flower-img-wrap {
+    height: 105px;
+  }
+
+  .flower-info {
+    padding: 8px 8px 4px;
+  }
+
+  .flower-name {
+    font-size: 0.85rem;
+  }
+
+  .flower-price {
+    font-size: 0.75rem;
+  }
+
+  .flower-controls {
+    gap: 6px;
+    padding: 4px 6px 10px;
+  }
+
+  .qty-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.95rem;
+  }
+
+  .wrap-photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .wrap-photo-img-wrap {
+    height: 100px;
+  }
+
+  .wrap-type-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .wrap-type-img-wrap {
+    height: 100px;
+  }
+
+  .builder-summary {
+    padding: 20px 16px;
+    border-radius: 18px;
   }
 }
 
