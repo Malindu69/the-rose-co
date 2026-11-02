@@ -16,42 +16,42 @@ const WRAPPING_PAPERS = [
     id: 'ivory-tissue',
     name: 'Ivory Tissue',
     desc: 'Soft & classic',
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-ivory.jpg',
     badge: '🤍 Most Popular'
   },
   {
     id: 'blush-pink',
     name: 'Blush Pink',
     desc: 'Romantic & dreamy',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-blush-pink.jpg',
     badge: '🩷 Romantic'
   },
   {
     id: 'kraft-rustic',
     name: 'Kraft Brown',
     desc: 'Natural & earthy',
-    image: 'https://images.unsplash.com/photo-1506619216599-9d16d0903dfd?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-kraft.jpg',
     badge: '🤎 Eco-Chic'
   },
   {
     id: 'black-matte',
     name: 'Black Matte',
     desc: 'Bold & luxurious',
-    image: 'https://images.unsplash.com/photo-1574620134890-3498f55c9bb0?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-black-matte.jpg',
     badge: '🖤 Luxury'
   },
   {
     id: 'lavender-frost',
     name: 'Lavender Frost',
     desc: 'Delicate & feminine',
-    image: 'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-lavender.jpg',
     badge: '💜 Dreamy'
   },
   {
     id: 'gold-foil',
     name: 'Gold Shimmer',
     desc: 'Premium & celebratory',
-    image: 'https://images.unsplash.com/photo-1547496502-affa22d38842?auto=format&fit=crop&w=300&q=80',
+    image: '/paper-gold-shimmer.jpg',
     badge: '✨ Premium'
   },
 ];
@@ -62,25 +62,25 @@ const WRAPPING_TYPES = [
     id: 'round-korean',
     name: 'Korean Style',
     desc: 'Full wrapped round dome — trending & modern',
-    image: 'https://images.unsplash.com/photo-1561181286-d3fee7d55ef6?auto=format&fit=crop&w=300&q=80',
+    image: '/style-korean.jpg',
   },
   {
     id: 'french-open',
     name: 'French Open',
     desc: 'Loosely wrapped, stems visible, elegant & airy',
-    image: 'https://images.unsplash.com/photo-1562690868-60bbe7293e94?auto=format&fit=crop&w=300&q=80',
+    image: '/style-french.jpg',
   },
   {
     id: 'cone-classic',
     name: 'Classic Cone',
     desc: 'Traditional cone wrap — timeless & easy to hold',
-    image: 'https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=300&q=80',
+    image: '/style-cone.jpg',
   },
   {
     id: 'flat-bouquet',
     name: 'Flat Fan',
     desc: 'Flat, wide fan shape — great for photographs',
-    image: 'https://images.unsplash.com/photo-1548517638-de57d8e3b1db?auto=format&fit=crop&w=300&q=80',
+    image: '/style-fan.jpg',
   },
 ];
 
