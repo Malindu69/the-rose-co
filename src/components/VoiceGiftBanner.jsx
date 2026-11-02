@@ -41,7 +41,7 @@ function VoiceGiftBanner({ onGoToBuilder }) {
 
             <div className="voice-actions">
               <a 
-                href="http://localhost:5173/?from=Someone+Special" 
+                href="https://voice-player.vercel.app/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn btn-primary"
