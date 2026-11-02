@@ -1,7 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './ProductCatalog.css';
 
 function ProductCard({ product, onAddToCart, isBouquet = false }) {
+  const [count, setCount] = useState(1);
+
+  const handleDecrement = (e) => {
+    e.stopPropagation();
+    if (count > 1) setCount(prev => prev - 1);
+  };
+
+  const handleIncrement = (e) => {
+    e.stopPropagation();
+    setCount(prev => prev + 1);
+  };
+
+  const handleAdd = () => {
+    onAddToCart(product, count);
+  };
+
   return (
     <div className="product-card glass-card">
       <div className="product-image-container">
@@ -24,13 +40,36 @@ function ProductCard({ product, onAddToCart, isBouquet = false }) {
         )}
 
         <div className="product-footer">
-          <span className="product-price">LKR {product.price.toLocaleString()}</span>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => onAddToCart(product)}
-          >
-            {isBouquet ? '🛒 Pre-Order' : 'Add to Cart'}
-          </button>
+          <div className="product-price-box">
+            <span className="product-price">LKR {product.price.toLocaleString()}</span>
+            {!isBouquet && <span className="product-price-unit">/ stem</span>}
+          </div>
+
+          <div className="card-actions-row">
+            <div className="card-qty-selector">
+              <button 
+                type="button" 
+                className="card-qty-btn" 
+                onClick={handleDecrement}
+                disabled={count <= 1}
+                aria-label="Decrease quantity"
+              >−</button>
+              <span className="card-qty-value">{count}</span>
+              <button 
+                type="button" 
+                className="card-qty-btn" 
+                onClick={handleIncrement}
+                aria-label="Increase quantity"
+              >+</button>
+            </div>
+
+            <button 
+              className="btn btn-primary card-add-btn" 
+              onClick={handleAdd}
+            >
+              🛒 Add to Cart
+            </button>
+          </div>
         </div>
       </div>
     </div>

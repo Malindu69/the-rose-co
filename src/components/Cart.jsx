@@ -11,7 +11,7 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
   if (!isOpen) return null;
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = subtotal > 0 ? 10.00 : 0;
+  const deliveryFee = subtotal > 0 ? 500 : 0;
   const total = subtotal + deliveryFee;
 
   const handleCheckout = (e) => {
@@ -55,7 +55,7 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
                   <div className="cart-item-info">
                     <h4>{item.name}</h4>
                     <p className="cart-item-desc">{item.description}</p>
-                    <span className="cart-item-price">${item.price.toFixed(2)}</span>
+                    <span className="cart-item-price">LKR {item.price.toLocaleString()}</span>
                   </div>
                   <div className="cart-item-actions">
                     <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}>-</button>
@@ -99,7 +99,7 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
                 <label>Recipient's Name (Optional)</label>
                 <input 
                   type="text" 
-                  placeholder="e.g., Sarah Jenkins"
+                  placeholder="Enter recipient's name"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                 />
@@ -123,7 +123,7 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
                   <div className="voice-extra-fields">
                     <input 
                       type="text" 
-                      placeholder="Your Name (From: e.g. Kasun)"
+                      placeholder="Enter your name"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
                     />
@@ -137,20 +137,20 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
               <div className="cart-summary">
                 <div className="summary-row">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>LKR {subtotal.toLocaleString()}</span>
                 </div>
                 <div className="summary-row">
                   <span>Handcrafted Pre-Order Delivery</span>
-                  <span>${deliveryFee.toFixed(2)}</span>
+                  <span>LKR {deliveryFee.toLocaleString()}</span>
                 </div>
                 <div className="summary-row total">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>LKR {total.toLocaleString()}</span>
                 </div>
               </div>
 
               <button type="submit" className="btn btn-primary checkout-btn">
-                Confirm Pre-Order (${total.toFixed(2)})
+                Confirm Pre-Order (LKR {total.toLocaleString()})
               </button>
             </form>
           </div>

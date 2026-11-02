@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AnnouncementBar from './components/AnnouncementBar';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProductCatalog from './components/ProductCatalog';
@@ -26,18 +25,19 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product, quantityToAdd = null) => {
+    const qty = quantityToAdd || product.quantity || 1;
     setCartItems(prev => {
       if (product.isCustom) {
-        return [...prev, { ...product, quantity: 1 }];
+        return [...prev, { ...product, quantity: qty }];
       }
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
         return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: qty }];
     });
     setIsCartOpen(true);
   };
@@ -88,7 +88,6 @@ function App() {
 
   return (
     <div className="bg-gradient-mesh min-h-screen">
-      <AnnouncementBar />
       <Header 
         cartCount={totalItems} 
         onCartClick={() => setIsCartOpen(true)}
