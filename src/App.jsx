@@ -5,24 +5,39 @@ import ProductCatalog from './components/ProductCatalog';
 import CustomBuilderPage from './components/CustomBuilderPage';
 import VoiceGiftBanner from './components/VoiceGiftBanner';
 import Cart from './components/Cart';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // Secret routing: check for /admin or #admin
   const [currentPage, setCurrentPage] = useState(() => {
-    return window.location.pathname === '/builder' || window.location.hash === '#builder' ? 'builder' : 'home';
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    if (path === '/admin' || hash === '#admin') return 'admin';
+    if (path === '/builder' || hash === '#builder') return 'builder';
+    return 'home';
   });
 
   useEffect(() => {
     const handlePopState = () => {
-      if (window.location.pathname === '/builder' || window.location.hash === '#builder') {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === '/admin' || hash === '#admin') {
+        setCurrentPage('admin');
+      } else if (path === '/builder' || hash === '#builder') {
         setCurrentPage('builder');
       } else {
         setCurrentPage('home');
       }
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const handleAddToCart = (product, quantityToAdd = null) => {
@@ -56,29 +71,17 @@ function App() {
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleCheckout = (orderData) => {
-    const voiceMsg = orderData.includeVoiceNote 
-      ? `\nVoice QR Keepsake: Yes (From: ${orderData.senderName || 'Anonymous'})\n*Send your voice note to our WhatsApp to link it!*`
-      : '';
-
-    alert(
-      `💐 Thank you for your Pre-Order with The Rose Co.!\n\n` +
-      `Total: LKR ${orderData.total.toLocaleString()}\n` +
-      `Delivery Date: ${orderData.deliveryDate}\n` +
-      `Time Slot: ${orderData.deliveryTime}\n` +
-      `Recipient: ${orderData.recipientName || 'Not specified'}` +
-      voiceMsg +
-      `\n\nOur florist team will handcraft your bouquet fresh!`
-    );
+  const handleClearCart = () => {
     setCartItems([]);
-    setIsCartOpen(false);
   };
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const navigateTo = (page) => {
     setCurrentPage(page);
-    if (page === 'builder') {
+    if (page === 'admin') {
+      window.history.pushState(null, '', '/admin');
+    } else if (page === 'builder') {
       window.history.pushState(null, '', '/builder');
     } else {
       window.history.pushState(null, '', '/');
@@ -86,6 +89,12 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // 1. Secret Admin Panel View (No public buttons/links lead here)
+  if (currentPage === 'admin') {
+    return <AdminDashboard onExit={() => navigateTo('home')} />;
+  }
+
+  // 2. Normal Public Customer View
   return (
     <div className="bg-gradient-mesh min-h-screen">
       <Header 
@@ -141,7 +150,7 @@ function App() {
         cartItems={cartItems}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
-        onCheckout={handleCheckout}
+        onClearCart={handleClearCart}
       />
     </div>
   );

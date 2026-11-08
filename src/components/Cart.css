@@ -264,6 +264,143 @@
   font-size: 1.05rem;
 }
 
+.checkout-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.field-hint {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-light);
+  margin-top: 4px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Order Success View */
+.order-success-view {
+  padding: 36px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.success-icon-badge {
+  font-size: 3.2rem;
+  background: rgba(255, 107, 129, 0.12);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  animation: bounceIn 0.5s ease;
+}
+
+.order-success-view h3 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.order-id-tag {
+  display: inline-block;
+  background: var(--color-text-dark);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 50px;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.success-desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text-light);
+  margin-bottom: 20px;
+}
+
+.success-details-box {
+  width: 100%;
+  padding: 16px;
+  text-align: left;
+  margin-bottom: 20px;
+  background: #fff;
+}
+
+.success-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.success-row:last-child {
+  margin-bottom: 0;
+}
+
+.voice-alert-row {
+  color: #8e44ad;
+  border-top: 1px dashed rgba(142, 68, 173, 0.3);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.voice-submission-notice {
+  background: #fbf5fc;
+  border: 1px solid #ebdef0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.notice-icon {
+  font-size: 1.4rem;
+}
+
+.voice-submission-notice p {
+  font-size: 0.85rem;
+  color: #5b2c6f;
+  line-height: 1.4;
+}
+
+.success-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.whatsapp-confirm-btn {
+  background: #25d366 !important;
+  color: #fff !important;
+  border: none;
+}
+
+.whatsapp-confirm-btn:hover {
+  background: #20ba5a !important;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
