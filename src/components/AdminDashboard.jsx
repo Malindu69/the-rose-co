@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   getOrders, 
-  updateOrderStatus, 
+  toggleOrderStatus, 
   deleteOrder, 
   getSettings, 
   updateSettings, 
@@ -14,29 +14,17 @@ import './AdminDashboard.css';
 
 function AdminDashboard({ onExit }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Dashboard state
+  // Orders & filter
   const [orders, setOrders] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'settings' | 'new-order'
+  const [filter, setFilter] = useState('active'); // 'active' | 'done' | 'all'
   
-  // Settings state
-  const [settings, setSettingsState] = useState(getSettings());
-  const [settingsSavedMsg, setSettingsSavedMsg] = useState('');
-  const [testEmailStatus, setTestEmailStatus] = useState('');
-
-  // Manual order form state
-  const [manualCustomerName, setManualCustomerName] = useState('');
-  const [manualCustomerPhone, setManualCustomerPhone] = useState('');
-  const [manualAddress, setManualAddress] = useState('');
-  const [manualDate, setManualDate] = useState('');
-  const [manualTime, setManualTime] = useState('morning');
-  const [manualItemDesc, setManualItemDesc] = useState('');
-  const [manualTotal, setManualTotal] = useState('');
+  // Email settings
+  const [emailInput, setEmailInput] = useState('');
+  const [emailStatus, setEmailStatus] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     const authed = checkAdminAuth();
@@ -48,18 +36,19 @@ function AdminDashboard({ onExit }) {
 
   const loadData = () => {
     setOrders(getOrders());
-    setSettingsState(getSettings());
+    const settings = getSettings();
+    setEmailInput(settings.notificationEmail || '');
   };
 
   const handleLogin = (e) => {
     e.preventDefault();
     setLoginError('');
-    const res = loginAdmin(username, password);
+    const res = loginAdmin(password);
     if (res.success) {
       setIsAuthenticated(true);
       loadData();
     } else {
-      setLoginError(res.error || 'Invalid credentials');
+      setLoginError(res.error || 'Incorrect password');
     }
   };
 
@@ -68,672 +57,285 @@ function AdminDashboard({ onExit }) {
     setIsAuthenticated(false);
   };
 
-  const handleStatusChange = (orderId, newStatus) => {
-    const updated = updateOrderStatus(orderId, newStatus);
-    if (updated) {
-      setOrders(updated);
-    }
+  const handleToggleStatus = (orderId) => {
+    const updated = toggleOrderStatus(orderId);
+    if (updated) setOrders(updated);
   };
 
   const handleDelete = (orderId) => {
-    if (window.confirm(`Are you sure you want to permanently delete order #${orderId}?`)) {
+    if (window.confirm(`Delete order #${orderId}?`)) {
       const updated = deleteOrder(orderId);
-      if (updated) {
-        setOrders(updated);
-      }
+      if (updated) setOrders(updated);
     }
   };
 
-  const handleSaveSettings = (e) => {
+  const handleSaveEmail = (e) => {
     e.preventDefault();
-    const updated = updateSettings(settings);
-    if (updated) {
-      setSettingsState(updated);
-      setSettingsSavedMsg('Settings saved successfully! ✅');
-      setTimeout(() => setSettingsSavedMsg(''), 4000);
+    if (!emailInput.trim()) {
+      alert('Please enter an email address.');
+      return;
     }
+    updateSettings({ notificationEmail: emailInput.trim() });
+    setEmailStatus('Email saved! Click "Send Test Email" to test.');
+    setTimeout(() => setEmailStatus(''), 4000);
   };
 
   const handleSendTestEmail = async () => {
-    if (!settings.notificationEmail) {
-      alert('Please enter an email address first.');
+    if (!emailInput.trim()) {
+      alert('Please enter your email first and click Save.');
       return;
     }
-    setTestEmailStatus('Sending test notification...');
+    setIsSendingTest(true);
+    setEmailStatus('Sending test notification...');
+    
+    updateSettings({ notificationEmail: emailInput.trim() });
+
     const dummyOrder = {
-      id: 'TRC-TEST',
-      createdAt: new Date().toISOString(),
+      id: 'TEST-101',
       customerName: 'Test Customer',
-      customerPhone: '+94 77 000 0000',
-      customerEmail: settings.notificationEmail,
+      customerPhone: '+94 77 123 4567',
       deliveryAddress: 'Boarding Place / Test Delivery Road',
       deliveryDate: new Date().toISOString().split('T')[0],
-      deliveryTime: 'morning (9AM-12PM)',
-      recipientName: 'The Rose Co. Admin',
+      deliveryTime: 'Morning (9 AM - 12 PM)',
       includeVoiceNote: true,
-      senderName: 'Antigravity Tester',
-      notes: 'This is a test notification to verify your email inbox configuration.',
-      items: [{ id: 'test-item', name: 'Sample Red Rose Bouquet', price: 4500, quantity: 1 }],
-      subtotal: 4500,
-      deliveryFee: 500,
+      senderName: 'Sender Name',
+      notes: 'This is a test notification to activate your email inbox.',
+      items: [{ name: 'Sample Red Rose Bouquet', price: 4500, quantity: 1 }],
       total: 5000
     };
 
-    try {
-      await sendOrderNotificationEmail(dummyOrder, settings.notificationEmail);
-      setTestEmailStatus('Test email sent! Please check your inbox (and spam folder). Look for an activation link from FormSubmit if this is the first time.');
-    } catch (err) {
-      setTestEmailStatus('Error sending email: ' + err.message);
-    }
-  };
+    const res = await sendOrderNotificationEmail(dummyOrder, emailInput.trim());
+    setIsSendingTest(false);
 
-  const handleCreateManualOrder = (e) => {
-    e.preventDefault();
-    if (!manualCustomerName || !manualTotal) {
-      alert('Please fill out customer name and total.');
-      return;
+    if (res.message && res.message.toLowerCase().includes('activation')) {
+      setEmailStatus('⚠️ ACTION REQUIRED: FormSubmit sent an activation email to ' + emailInput + '! Open your Gmail inbox (or spam) and click the "Activate Form" button once. After that, all orders will land directly in your inbox!');
+    } else if (res.success === "true" || res.success === true) {
+      setEmailStatus('✅ Test email delivered successfully! Check your inbox.');
+    } else {
+      setEmailStatus('Result: ' + (res.message || 'Notification sent. Check your inbox & spam.'));
     }
-    const orderId = `TRC-M${Math.floor(1000 + Math.random() * 9000)}`;
-    const newOrder = {
-      id: orderId,
-      createdAt: new Date().toISOString(),
-      customerName: manualCustomerName,
-      customerPhone: manualCustomerPhone || 'Not provided',
-      customerEmail: '',
-      deliveryAddress: manualAddress || 'Pick-up',
-      deliveryDate: manualDate || new Date().toISOString().split('T')[0],
-      deliveryTime: manualTime,
-      recipientName: '',
-      includeVoiceNote: false,
-      senderName: '',
-      notes: 'Manually logged from WhatsApp / Call',
-      items: [
-        {
-          id: 'manual-item',
-          name: manualItemDesc || 'Custom Bouquet / Flowers',
-          price: parseInt(manualTotal, 10),
-          quantity: 1,
-          image: '/stems/red_rose.jpg'
-        }
-      ],
-      subtotal: parseInt(manualTotal, 10),
-      deliveryFee: 0,
-      total: parseInt(manualTotal, 10),
-      status: 'pending'
-    };
-
-    const existing = getOrders();
-    const updated = [newOrder, ...existing];
-    localStorage.setItem('the_rose_co_orders', JSON.stringify(updated));
-    setOrders(updated);
-    
-    // Reset form
-    setManualCustomerName('');
-    setManualCustomerPhone('');
-    setManualAddress('');
-    setManualItemDesc('');
-    setManualTotal('');
-    setActiveTab('orders');
-    alert(`Order #${orderId} created successfully!`);
   };
 
   const filteredOrders = orders.filter(order => {
-    // Filter status
-    if (filterStatus !== 'all' && order.status !== filterStatus) {
-      return false;
-    }
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchId = order.id.toLowerCase().includes(q);
-      const matchName = (order.customerName || '').toLowerCase().includes(q);
-      const matchPhone = (order.customerPhone || '').toLowerCase().includes(q);
-      const matchAddress = (order.deliveryAddress || '').toLowerCase().includes(q);
-      return matchId || matchName || matchPhone || matchAddress;
-    }
+    if (filter === 'active') return order.status === 'active';
+    if (filter === 'done') return order.status === 'done';
     return true;
   });
 
-  // Calculate metrics
-  const totalCount = orders.length;
-  const pendingCount = orders.filter(o => o.status === 'pending').length;
-  const inProgressCount = orders.filter(o => o.status === 'in_progress').length;
-  const completedCount = orders.filter(o => o.status === 'completed').length;
-  const totalRevenue = orders
-    .filter(o => o.status === 'completed')
-    .reduce((sum, o) => sum + (o.total || 0), 0);
+  const activeCount = orders.filter(o => o.status === 'active').length;
+  const doneCount = orders.filter(o => o.status === 'done').length;
 
-  // 1. Render Login Screen if not authenticated
+  // 1. Password Unlock Screen
   if (!isAuthenticated) {
     return (
-      <div className="admin-login-wrapper">
-        <div className="admin-login-card glass-panel">
-          <div className="admin-login-header">
-            <span className="admin-badge-lock">🔒 Restricted Staff Portal</span>
-            <img src="/logo.png" alt="The Rose Co." className="admin-login-logo" />
-            <h2>The Rose Co. Management</h2>
-            <p>Enter administrative credentials to access order management &amp; store controls.</p>
-          </div>
+      <div className="admin-simple-login">
+        <div className="login-box glass-panel">
+          <img src="/logo.png" alt="The Rose Co." className="login-logo" />
+          <h2>Florist Admin Portal</h2>
+          <p>Enter password to manage orders</p>
 
-          <form onSubmit={handleLogin} className="admin-login-form">
-            {loginError && <div className="admin-alert-error">{loginError}</div>}
-            
-            <div className="form-group">
-              <label>Username</label>
-              <input 
-                type="text" 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                placeholder="Enter username" 
-                required 
-                autoFocus
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Password</label>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="Enter password" 
-                required 
-              />
-            </div>
-
+          <form onSubmit={handleLogin}>
+            {loginError && <div className="login-err">{loginError}</div>}
+            <input 
+              type="password" 
+              placeholder="Enter password (default: roseco2026)" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+              required
+            />
             <button type="submit" className="btn btn-primary btn-block">
-              Unlock Admin Portal 🌸
+              Unlock Dashboard 🌸
             </button>
           </form>
 
-          <div className="admin-login-footer">
-            <small>Default credentials: <code>admin</code> / <code>roseco2026</code></small>
-            <br />
-            <button onClick={onExit} className="btn-link">← Return to Public Website</button>
-          </div>
+          <button onClick={onExit} className="btn-back">
+            ← Return to Flower Shop
+          </button>
         </div>
       </div>
     );
   }
 
-  // 2. Render Main Admin Dashboard
+  // 2. Simple Dashboard
   return (
-    <div className="admin-dashboard-container">
-      {/* Top Navbar */}
-      <header className="admin-navbar glass-panel">
-        <div className="admin-nav-brand">
-          <img src="/logo.png" alt="The Rose Co." className="admin-nav-logo" />
-          <div>
-            <h3>The Rose Co. <span className="staff-pill">Staff Dashboard</span></h3>
-            <span className="admin-status-indicator">🟢 Live Order Monitoring Active</span>
-          </div>
+    <div className="admin-simple-container">
+      {/* Simple Header */}
+      <header className="simple-header">
+        <div className="simple-brand">
+          <img src="/logo.png" alt="The Rose Co." className="simple-logo" />
+          <h2>The Rose Co. <span className="simple-badge">Orders</span></h2>
         </div>
-
-        <div className="admin-nav-actions">
-          <button 
-            className={`admin-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            📋 Orders ({pendingCount + inProgressCount} Active)
-          </button>
-          <button 
-            className={`admin-tab-btn ${activeTab === 'new-order' ? 'active' : ''}`}
-            onClick={() => setActiveTab('new-order')}
-          >
-            ➕ Manual Order
-          </button>
-          <button 
-            className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            ⚙️ Email &amp; Settings
-          </button>
-          <button className="admin-nav-link-btn" onClick={onExit} title="Go to customer site">
-            🌐 View Site
-          </button>
-          <button className="admin-nav-logout-btn" onClick={handleLogout} title="Log out">
-            🚪 Logout
-          </button>
+        <div className="simple-header-btns">
+          <button onClick={onExit} className="btn-outline-sm">🌐 View Store</button>
+          <button onClick={handleLogout} className="btn-logout-sm">🚪 Logout</button>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <div className="admin-main container">
+      <main className="simple-content">
+        {/* Email Notification Setup Box */}
+        <div className="email-setup-box glass-panel">
+          <div className="email-box-header">
+            <strong>📬 Where should order alert emails be sent?</strong>
+            <p>Every time a customer places an order on your site, details will be emailed here.</p>
+          </div>
 
-        {/* Tab 1: Orders Dashboard */}
-        {activeTab === 'orders' && (
-          <>
-            {/* KPI Metrics */}
-            <div className="admin-kpi-grid">
-              <div className="kpi-card pending-kpi glass-card">
-                <div className="kpi-icon">⏳</div>
-                <div className="kpi-info">
-                  <h4>{pendingCount}</h4>
-                  <span>New Orders Pending</span>
-                </div>
-              </div>
+          <form onSubmit={handleSaveEmail} className="email-setup-form">
+            <input 
+              type="email" 
+              placeholder="Enter your email (e.g. yourshop@gmail.com)" 
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              required
+            />
+            <button type="submit" className="btn btn-primary btn-sm">💾 Save</button>
+            <button 
+              type="button" 
+              onClick={handleSendTestEmail} 
+              className="btn btn-outline btn-sm"
+              disabled={isSendingTest}
+            >
+              {isSendingTest ? 'Sending...' : '✉️ Send Test Email'}
+            </button>
+          </form>
 
-              <div className="kpi-card progress-kpi glass-card">
-                <div className="kpi-icon">🌸</div>
-                <div className="kpi-info">
-                  <h4>{inProgressCount}</h4>
-                  <span>Arranging &amp; Delivery</span>
-                </div>
-              </div>
-
-              <div className="kpi-card completed-kpi glass-card">
-                <div className="kpi-icon">✅</div>
-                <div className="kpi-info">
-                  <h4>{completedCount}</h4>
-                  <span>Completed Orders</span>
-                </div>
-              </div>
-
-              <div className="kpi-card revenue-kpi glass-card">
-                <div className="kpi-icon">💰</div>
-                <div className="kpi-info">
-                  <h4>LKR {totalRevenue.toLocaleString()}</h4>
-                  <span>Completed Revenue</span>
-                </div>
-              </div>
+          {emailStatus && (
+            <div className={`email-status-banner ${emailStatus.includes('ACTION REQUIRED') ? 'warning' : 'info'}`}>
+              {emailStatus}
             </div>
+          )}
+        </div>
 
-            {/* Filter and Search Bar */}
-            <div className="admin-controls-bar glass-panel">
-              <div className="admin-search-box">
-                <span className="search-icon">🔍</span>
-                <input 
-                  type="text" 
-                  placeholder="Search customer name, phone, address, or #TRC-..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button className="clear-search" onClick={() => setSearchQuery('')}>✕</button>
-                )}
-              </div>
+        {/* Filter Bar */}
+        <div className="simple-filter-bar">
+          <div className="filter-buttons">
+            <button 
+              className={`simple-filter-btn ${filter === 'active' ? 'active' : ''}`}
+              onClick={() => setFilter('active')}
+            >
+              ⏳ Active Orders ({activeCount})
+            </button>
+            <button 
+              className={`simple-filter-btn ${filter === 'done' ? 'active' : ''}`}
+              onClick={() => setFilter('done')}
+            >
+              ✅ Completed ({doneCount})
+            </button>
+            <button 
+              className={`simple-filter-btn ${filter === 'all' ? 'active' : ''}`}
+              onClick={() => setFilter('all')}
+            >
+              All ({orders.length})
+            </button>
+          </div>
+        </div>
 
-              <div className="admin-status-filters">
-                <button 
-                  className={`filter-chip ${filterStatus === 'all' ? 'active' : ''}`}
-                  onClick={() => setFilterStatus('all')}
-                >
-                  All ({totalCount})
-                </button>
-                <button 
-                  className={`filter-chip chip-pending ${filterStatus === 'pending' ? 'active' : ''}`}
-                  onClick={() => setFilterStatus('pending')}
-                >
-                  ⏳ Pending ({pendingCount})
-                </button>
-                <button 
-                  className={`filter-chip chip-progress ${filterStatus === 'in_progress' ? 'active' : ''}`}
-                  onClick={() => setFilterStatus('in_progress')}
-                >
-                  🌸 In Progress ({inProgressCount})
-                </button>
-                <button 
-                  className={`filter-chip chip-completed ${filterStatus === 'completed' ? 'active' : ''}`}
-                  onClick={() => setFilterStatus('completed')}
-                >
-                  ✅ Completed ({completedCount})
-                </button>
-                <button 
-                  className={`filter-chip chip-cancelled ${filterStatus === 'cancelled' ? 'active' : ''}`}
-                  onClick={() => setFilterStatus('cancelled')}
-                >
-                  ❌ Cancelled
-                </button>
-              </div>
+        {/* Orders List */}
+        <div className="orders-stack">
+          {filteredOrders.length === 0 ? (
+            <div className="no-orders glass-card">
+              <span className="no-orders-emoji">🌸</span>
+              <p>No {filter === 'active' ? 'active' : ''} orders right now.</p>
             </div>
+          ) : (
+            filteredOrders.map(order => {
+              const cleanPhone = (order.customerPhone || '').replace(/[^0-9]/g, '');
+              const waLink = `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(order.customerName)}!%20This%20is%20The%20Rose%20Co.%20regarding%20your%20order%20%23${order.id}.`;
 
-            {/* Orders Feed */}
-            <div className="admin-orders-list">
-              {filteredOrders.length === 0 ? (
-                <div className="admin-empty-state glass-card">
-                  <span className="empty-emoji">🌷</span>
-                  <h3>No orders found</h3>
-                  <p>No orders match your filter criteria or search query.</p>
-                </div>
-              ) : (
-                filteredOrders.map(order => {
-                  const cleanPhone = (order.customerPhone || '').replace(/[^0-9+]/g, '');
-                  const waLink = `https://wa.me/${cleanPhone.replace('+', '')}?text=Hi%20${encodeURIComponent(order.customerName)}!%20This%20is%20The%20Rose%20Co.%20regarding%20your%20order%20%23${order.id}.`;
-
-                  return (
-                    <div key={order.id} className={`admin-order-card glass-card status-border-${order.status}`}>
-                      <div className="order-card-header">
-                        <div className="order-id-group">
-                          <span className="order-id-badge">#{order.id}</span>
-                          <span className="order-time-placed">
-                            Placed: {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-
-                        <div className="order-header-right">
-                          <span className={`status-pill status-${order.status}`}>
-                            {order.status === 'pending' && '⏳ New Pre-Order'}
-                            {order.status === 'in_progress' && '🌸 Arranging / Delivering'}
-                            {order.status === 'completed' && '✅ Completed & Delivered'}
-                            {order.status === 'cancelled' && '❌ Cancelled'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Delivery Highlight Banner */}
-                      <div className="order-delivery-banner">
-                        <div className="delivery-timing">
-                          <strong>📅 Pre-Order Delivery:</strong> {order.deliveryDate || 'Date not set'} 
-                          <span className="time-slot-badge">⏰ {order.deliveryTime ? order.deliveryTime.toUpperCase() : 'FLEXIBLE'}</span>
-                        </div>
-                        {order.includeVoiceNote && (
-                          <div className="voice-tag-alert">
-                            🎙️ <strong>Voice QR Keepsake Tag Requested!</strong> (From: {order.senderName || order.customerName})
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Customer & Delivery Details Grid */}
-                      <div className="order-details-grid">
-                        <div className="detail-col">
-                          <h5>Customer Details</h5>
-                          <p className="detail-name"><strong>{order.customerName}</strong></p>
-                          <p className="detail-phone">
-                            📞 {order.customerPhone} 
-                            {cleanPhone && (
-                              <a 
-                                href={waLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="whatsapp-action-btn"
-                                title="Chat on WhatsApp"
-                              >
-                                💬 WhatsApp Customer
-                              </a>
-                            )}
-                          </p>
-                          {order.customerEmail && (
-                            <p className="detail-email">✉️ {order.customerEmail}</p>
-                          )}
-                        </div>
-
-                        <div className="detail-col">
-                          <h5>Delivery Address</h5>
-                          <p className="detail-address">📍 {order.deliveryAddress}</p>
-                          {order.recipientName && (
-                            <p className="detail-recipient">
-                              🎁 <strong>Recipient:</strong> {order.recipientName}
-                            </p>
-                          )}
-                          {order.notes && (
-                            <p className="detail-notes">
-                              📝 <em>Note: "{order.notes}"</em>
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="detail-col order-items-summary">
-                          <h5>Items Ordered ({order.items?.length || 0})</h5>
-                          <ul className="admin-items-list">
-                            {order.items?.map((item, idx) => (
-                              <li key={idx} className="admin-item-row">
-                                <span className="item-qty-badge">{item.quantity}x</span>
-                                <span className="item-name-text">{item.name}</span>
-                                <span className="item-price-sub">LKR {(item.price * item.quantity).toLocaleString()}</span>
-                              </li>
-                            ))}
-                          </ul>
-                          <div className="admin-price-breakdown">
-                            <div className="pb-row">
-                              <span>Delivery Fee:</span>
-                              <span>LKR {(order.deliveryFee || 500).toLocaleString()}</span>
-                            </div>
-                            <div className="pb-row grand-total">
-                              <span>Grand Total:</span>
-                              <strong>LKR {order.total.toLocaleString()}</strong>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Management Action Bar */}
-                      <div className="order-actions-bar">
-                        <div className="status-buttons-group">
-                          {order.status !== 'in_progress' && (
-                            <button 
-                              className="action-btn btn-progress"
-                              onClick={() => handleStatusChange(order.id, 'in_progress')}
-                            >
-                              🌸 Mark In Progress
-                            </button>
-                          )}
-
-                          {order.status !== 'completed' && (
-                            <button 
-                              className="action-btn btn-complete"
-                              onClick={() => handleStatusChange(order.id, 'completed')}
-                            >
-                              ✅ Mark Completed
-                            </button>
-                          )}
-
-                          {order.status !== 'pending' && (
-                            <button 
-                              className="action-btn btn-reopen"
-                              onClick={() => handleStatusChange(order.id, 'pending')}
-                            >
-                              ⏳ Revert to Pending
-                            </button>
-                          )}
-
-                          {order.status !== 'cancelled' && (
-                            <button 
-                              className="action-btn btn-cancel"
-                              onClick={() => handleStatusChange(order.id, 'cancelled')}
-                            >
-                              ❌ Cancel Order
-                            </button>
-                          )}
-                        </div>
-
-                        <button 
-                          className="action-btn btn-delete"
-                          onClick={() => handleDelete(order.id)}
-                          title="Delete from list"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+              return (
+                <div key={order.id} className={`simple-order-card glass-card ${order.status === 'done' ? 'is-done' : 'is-active'}`}>
+                  {/* Card Header */}
+                  <div className="order-top">
+                    <div>
+                      <span className="order-num">#{order.id}</span>
+                      <span className="order-time">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                  );
-                })
-              )}
-            </div>
-          </>
-        )}
 
-        {/* Tab 2: Manual Order Creation */}
-        {activeTab === 'new-order' && (
-          <div className="admin-form-card glass-panel">
-            <div className="form-card-header">
-              <h3>➕ Log Manual / WhatsApp Order</h3>
-              <p>Received an order over phone call or WhatsApp message? Log it here to track on your dashboard.</p>
-            </div>
+                    <button 
+                      onClick={() => handleToggleStatus(order.id)}
+                      className={`status-toggle-btn ${order.status === 'done' ? 'done' : 'active'}`}
+                    >
+                      {order.status === 'done' ? '✅ Completed (Click to Reopen)' : '⏳ Active (Click when Done)'}
+                    </button>
+                  </div>
 
-            <form onSubmit={handleCreateManualOrder} className="manual-order-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Customer Name *</label>
-                  <input 
-                    type="text" 
-                    value={manualCustomerName}
-                    onChange={(e) => setManualCustomerName(e.target.value)}
-                    placeholder="e.g. Kasun Jayawardena"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Customer Phone / WhatsApp</label>
-                  <input 
-                    type="text" 
-                    value={manualCustomerPhone}
-                    onChange={(e) => setManualCustomerPhone(e.target.value)}
-                    placeholder="e.g. +94 77 123 4567"
-                  />
-                </div>
-              </div>
+                  {/* Delivery Highlight */}
+                  <div className="order-delivery-tag">
+                    <strong>📅 Deliver on:</strong> {order.deliveryDate || 'ASAP'} ({order.deliveryTime})
+                  </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Delivery Address</label>
-                  <input 
-                    type="text" 
-                    value={manualAddress}
-                    onChange={(e) => setManualAddress(e.target.value)}
-                    placeholder="Delivery address or Boarding pickup"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Delivery Date</label>
-                  <input 
-                    type="date" 
-                    value={manualDate}
-                    onChange={(e) => setManualDate(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Time Slot</label>
-                  <select value={manualTime} onChange={(e) => setManualTime(e.target.value)}>
-                    <option value="morning">Morning (9am - 12pm)</option>
-                    <option value="afternoon">Afternoon (12pm - 4pm)</option>
-                    <option value="evening">Evening (4pm - 8pm)</option>
-                  </select>
-                </div>
-              </div>
+                  {/* Customer Info */}
+                  <div className="order-info-row">
+                    <div>
+                      <strong>Customer:</strong> {order.customerName}
+                    </div>
+                    <div className="phone-wrap">
+                      <span>📞 {order.customerPhone}</span>
+                      {cleanPhone && (
+                        <a 
+                          href={waLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="simple-wa-btn"
+                        >
+                          💬 WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="form-row">
-                <div className="form-group flex-2">
-                  <label>Bouquet / Item Description</label>
-                  <input 
-                    type="text" 
-                    value={manualItemDesc}
-                    onChange={(e) => setManualItemDesc(e.target.value)}
-                    placeholder="e.g. 10x Red Roses with Matte Black wrapping + Ribbon"
-                  />
-                </div>
-                <div className="form-group flex-1">
-                  <label>Total Price (LKR) *</label>
-                  <input 
-                    type="number" 
-                    value={manualTotal}
-                    onChange={(e) => setManualTotal(e.target.value)}
-                    placeholder="e.g. 4500"
-                    required
-                  />
-                </div>
-              </div>
+                  {/* Address */}
+                  <div className="order-info-row">
+                    <div><strong>📍 Address:</strong> {order.deliveryAddress}</div>
+                  </div>
 
-              <button type="submit" className="btn btn-primary">
-                ➕ Add Order to Dashboard
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Tab 3: Settings & Email Config */}
-        {activeTab === 'settings' && (
-          <div className="admin-form-card glass-panel">
-            <div className="form-card-header">
-              <h3>⚙️ Store &amp; Notification Settings</h3>
-              <p>Configure which email receives real-time pre-order alerts and change your admin credentials.</p>
-            </div>
-
-            {settingsSavedMsg && (
-              <div className="settings-saved-banner">{settingsSavedMsg}</div>
-            )}
-
-            <form onSubmit={handleSaveSettings} className="settings-form">
-              <div className="settings-section">
-                <h4>📧 Order Notification Email</h4>
-                <p className="setting-description">
-                  Whenever a customer completes a pre-order on the site, an email alert with all customer details, items, delivery time, and voice note choice will be sent here immediately.
-                </p>
-
-                <div className="form-group">
-                  <label>Your Notification Email Address *</label>
-                  <input 
-                    type="email" 
-                    value={settings.notificationEmail}
-                    onChange={(e) => setSettingsState({ ...settings, notificationEmail: e.target.value })}
-                    placeholder="e.g. yourname@gmail.com"
-                    required
-                  />
-                  <small className="form-hint">
-                    💡 <em>Note:</em> The first time an order is sent, FormSubmit will send a one-time activation link to this inbox. Click that link once to authorize deliveries!
-                  </small>
-                </div>
-
-                <div className="test-email-actions">
-                  <button 
-                    type="button" 
-                    className="btn btn-outline btn-sm"
-                    onClick={handleSendTestEmail}
-                  >
-                    ✉️ Send Test Notification to this Email
-                  </button>
-                  {testEmailStatus && (
-                    <div className="test-status-msg">{testEmailStatus}</div>
+                  {/* Voice Note */}
+                  {order.includeVoiceNote && (
+                    <div className="order-voice-badge">
+                      🎙️ <strong>Voice Keepsake Tag Requested!</strong> (From: {order.senderName || order.customerName})
+                    </div>
                   )}
-                </div>
-              </div>
 
-              <div className="settings-section">
-                <h4>🔒 Admin Portal Credentials</h4>
-                <p className="setting-description">Change the login username or password used to access this secret admin portal.</p>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Admin Username</label>
-                    <input 
-                      type="text" 
-                      value={settings.adminUsername}
-                      onChange={(e) => setSettingsState({ ...settings, adminUsername: e.target.value })}
-                      required
-                    />
+                  {/* Items & Total */}
+                  <div className="order-items-box">
+                    <ul className="items-list">
+                      {order.items?.map((item, idx) => (
+                        <li key={idx}>
+                          <span>{item.quantity}x {item.name}</span>
+                          <span>LKR {(item.price * item.quantity).toLocaleString()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="order-total-row">
+                      <span>Total:</span>
+                      <strong>LKR {order.total.toLocaleString()}</strong>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Admin Password</label>
-                    <input 
-                      type="text" 
-                      value={settings.adminPassword}
-                      onChange={(e) => setSettingsState({ ...settings, adminPassword: e.target.value })}
-                      required
-                    />
+
+                  {order.notes && (
+                    <div className="order-note-text">
+                      <em>Note: "{order.notes}"</em>
+                    </div>
+                  )}
+
+                  {/* Footer actions */}
+                  <div className="order-bottom-actions">
+                    <button 
+                      onClick={() => handleDelete(order.id)} 
+                      className="btn-trash"
+                      title="Delete order"
+                    >
+                      🗑️ Delete Order
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="settings-section">
-                <h4>💬 Business WhatsApp Contact</h4>
-                <div className="form-group">
-                  <label>Store WhatsApp Phone Number (with country code)</label>
-                  <input 
-                    type="text" 
-                    value={settings.storePhone}
-                    onChange={(e) => setSettingsState({ ...settings, storePhone: e.target.value })}
-                    placeholder="e.g. +94771234567"
-                  />
-                </div>
-              </div>
-
-              <button type="submit" className="btn btn-primary">
-                💾 Save All Settings
-              </button>
-            </form>
-          </div>
-        )}
-
-      </div>
+              );
+            })
+          )}
+        </div>
+      </main>
     </div>
   );
 }
