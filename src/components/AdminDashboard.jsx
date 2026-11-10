@@ -10,6 +10,7 @@ import {
   logoutAdmin,
   sendOrderNotificationEmail
 } from '../services/orderService';
+import { supabase } from '../services/supabaseClient';
 import './AdminDashboard.css';
 
 function AdminDashboard({ onExit }) {
@@ -19,6 +20,7 @@ function AdminDashboard({ onExit }) {
 
   // Orders & filter
   const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState('active'); // 'active' | 'done' | 'all'
   
   // Email settings
@@ -34,19 +36,42 @@ function AdminDashboard({ onExit }) {
     }
   }, []);
 
-  const loadData = () => {
-    setOrders(getOrders());
+  // Set up Supabase Realtime subscription when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const channel = supabase
+      .channel('flower_orders_live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'flower_orders' },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const data = await getOrders();
+    setOrders(data);
+    setIsLoading(false);
     const settings = getSettings();
     setEmailInput(settings.notificationEmail || '');
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
     const res = loginAdmin(password);
     if (res.success) {
       setIsAuthenticated(true);
-      loadData();
+      await loadData();
     } else {
       setLoginError(res.error || 'Incorrect password');
     }
@@ -57,14 +82,14 @@ function AdminDashboard({ onExit }) {
     setIsAuthenticated(false);
   };
 
-  const handleToggleStatus = (orderId) => {
-    const updated = toggleOrderStatus(orderId);
+  const handleToggleStatus = async (orderId, currentStatus) => {
+    const updated = await toggleOrderStatus(orderId, currentStatus);
     if (updated) setOrders(updated);
   };
 
-  const handleDelete = (orderId) => {
+  const handleDelete = async (orderId) => {
     if (window.confirm(`Delete order #${orderId}?`)) {
-      const updated = deleteOrder(orderId);
+      const updated = await deleteOrder(orderId);
       if (updated) setOrders(updated);
     }
   };
@@ -167,6 +192,9 @@ function AdminDashboard({ onExit }) {
           <h2>The Rose Co. <span className="simple-badge">Orders</span></h2>
         </div>
         <div className="simple-header-btns">
+          <button onClick={loadData} className="btn-outline-sm" title="Reload from Supabase Cloud DB">
+            {isLoading ? '⏳ Loading...' : '🔄 Refresh'}
+          </button>
           <button onClick={onExit} className="btn-outline-sm">🌐 View Store</button>
           <button onClick={handleLogout} className="btn-logout-sm">🚪 Logout</button>
         </div>
@@ -235,7 +263,7 @@ function AdminDashboard({ onExit }) {
           {filteredOrders.length === 0 ? (
             <div className="no-orders glass-card">
               <span className="no-orders-emoji">🌸</span>
-              <p>No {filter === 'active' ? 'active' : ''} orders right now.</p>
+              <p>No {filter === 'active' ? 'active' : ''} orders found in Supabase.</p>
             </div>
           ) : (
             filteredOrders.map(order => {
@@ -254,7 +282,7 @@ function AdminDashboard({ onExit }) {
                     </div>
 
                     <button 
-                      onClick={() => handleToggleStatus(order.id)}
+                      onClick={() => handleToggleStatus(order.id, order.status)}
                       className={`status-toggle-btn ${order.status === 'done' ? 'done' : 'active'}`}
                     >
                       {order.status === 'done' ? '✅ Completed (Click to Reopen)' : '⏳ Active (Click when Done)'}

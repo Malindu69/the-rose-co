@@ -1,40 +1,38 @@
 // Order Service for The Rose Co.
-// Simple, lightweight order storage & email notification
+// Connects to Supabase Cloud Database + Local Fallback + Email Dispatch
+
+import { supabase } from './supabaseClient';
 
 const STORAGE_KEY_ORDERS = 'the_rose_co_orders';
 const STORAGE_KEY_SETTINGS = 'the_rose_co_settings';
 const STORAGE_KEY_AUTH = 'the_rose_co_admin_auth';
 
-// Default initial settings
 const DEFAULT_SETTINGS = {
-  notificationEmail: '', // Will be entered by user or set via chat
+  notificationEmail: '',
   adminPassword: 'roseco2026',
   storePhone: '+94770000000',
 };
 
-// Initial sample orders for preview
-const INITIAL_SAMPLE_ORDERS = [
-  {
-    id: 'TRC-7821',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    customerName: 'Kavindi Perera',
-    customerPhone: '+94 77 123 4567',
-    customerEmail: 'kavindi@gmail.com',
-    deliveryAddress: 'No. 42, Flower Road, Colombo 07',
-    deliveryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    deliveryTime: 'morning (9 AM – 12 PM)',
-    recipientName: 'Amila Silva (Birthday Surprise)',
-    includeVoiceNote: true,
-    senderName: 'Kavindi',
-    notes: 'Please call before ringing gate bell',
-    items: [
-      { id: '1', name: 'Classic Crimson Romance', price: 6500, quantity: 1 },
-      { id: '2', name: "Baby's Breath", price: 350, quantity: 2 }
-    ],
-    total: 7700,
-    status: 'active' // 'active' | 'done'
-  }
-];
+// Map database row to standard frontend order model
+const mapRowToOrder = (row) => ({
+  id: row.id,
+  createdAt: row.created_at,
+  customerName: row.customer_name || 'Customer',
+  customerPhone: row.customer_phone || '',
+  customerEmail: row.customer_email || '',
+  deliveryAddress: row.delivery_address || '',
+  deliveryDate: row.delivery_date || '',
+  deliveryTime: row.delivery_time || '',
+  recipientName: row.recipient_name || '',
+  includeVoiceNote: !!row.include_voice_note,
+  senderName: row.sender_name || '',
+  notes: row.notes || '',
+  items: row.items || [],
+  subtotal: row.subtotal || 0,
+  deliveryFee: row.delivery_fee || 0,
+  total: row.total || 0,
+  status: row.status === 'completed' || row.status === 'done' ? 'done' : 'active'
+});
 
 export const getSettings = () => {
   try {
@@ -60,98 +58,148 @@ export const updateSettings = (newSettings) => {
   }
 };
 
-export const getOrders = () => {
+// Fetch orders from Supabase cloud database (with local storage fallback)
+export const getOrders = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('flower_orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      const orders = data.map(mapRowToOrder);
+      // Cache locally for offline resilience
+      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+      return orders;
+    }
+  } catch (err) {
+    console.warn('Supabase fetch failed, falling back to local storage:', err);
+  }
+
+  // Fallback to local storage if network is offline
   try {
     const raw = localStorage.getItem(STORAGE_KEY_ORDERS);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(INITIAL_SAMPLE_ORDERS));
-      return INITIAL_SAMPLE_ORDERS;
-    }
-    const parsed = JSON.parse(raw);
-    // Normalize any legacy status
-    return parsed.map(o => ({
-      ...o,
-      status: o.status === 'completed' || o.status === 'done' ? 'done' : 'active'
-    }));
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    return INITIAL_SAMPLE_ORDERS;
+    return [];
   }
 };
 
+// Save order centrally to Supabase + trigger email notification
 export const saveOrder = async (orderData) => {
   const settings = getSettings();
   const orderId = `TRC-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const newOrder = {
+  const dbRow = {
     id: orderId,
-    createdAt: new Date().toISOString(),
-    status: 'active',
-    customerName: orderData.customerName || 'Customer',
-    customerPhone: orderData.customerPhone || 'Not provided',
-    customerEmail: orderData.customerEmail || '',
-    deliveryAddress: orderData.deliveryAddress || 'Pick-up',
-    deliveryDate: orderData.deliveryDate || '',
-    deliveryTime: orderData.deliveryTime || '',
-    recipientName: orderData.recipientName || '',
-    includeVoiceNote: !!orderData.includeVoiceNote,
-    senderName: orderData.senderName || '',
+    customer_name: orderData.customerName || 'Customer',
+    customer_phone: orderData.customerPhone || 'Not provided',
+    customer_email: orderData.customerEmail || '',
+    delivery_address: orderData.deliveryAddress || 'Pick-up',
+    delivery_date: orderData.deliveryDate || '',
+    delivery_time: orderData.deliveryTime || '',
+    recipient_name: orderData.recipientName || '',
+    include_voice_note: !!orderData.includeVoiceNote,
+    sender_name: orderData.senderName || '',
     notes: orderData.notes || '',
     items: orderData.items || [],
     subtotal: orderData.subtotal || 0,
-    deliveryFee: orderData.deliveryFee || 0,
-    total: orderData.total || 0
+    delivery_fee: orderData.deliveryFee || 0,
+    total: orderData.total || 0,
+    status: 'active'
   };
 
-  // 1. Save locally
+  // 1. Insert into Supabase
   try {
-    const existing = getOrders();
-    const updated = [newOrder, ...existing];
-    localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
-  } catch (e) {
-    console.error('Failed to save order locally', e);
-  }
+    const { data, error } = await supabase
+      .from('flower_orders')
+      .insert([dbRow])
+      .select();
 
-  // 2. Dispatch Email notification via FormSubmit
-  if (settings.notificationEmail && settings.notificationEmail.includes('@')) {
-    try {
-      await sendOrderNotificationEmail(newOrder, settings.notificationEmail);
-    } catch (err) {
-      console.warn('Email dispatch error:', err);
+    if (error) {
+      console.warn('Supabase insert warning:', error);
     }
+  } catch (err) {
+    console.warn('Supabase connection error:', err);
   }
 
-  return newOrder;
-};
+  const standardOrder = mapRowToOrder({
+    ...dbRow,
+    created_at: new Date().toISOString()
+  });
 
-// Toggle status between active and done with one click
-export const toggleOrderStatus = (orderId) => {
+  // 2. Cache in local storage
   try {
-    const orders = getOrders();
-    const updated = orders.map(order => {
-      if (order.id === orderId) {
-        return {
-          ...order,
-          status: order.status === 'active' ? 'done' : 'active'
-        };
-      }
-      return order;
+    const localRaw = localStorage.getItem(STORAGE_KEY_ORDERS);
+    const existing = localRaw ? JSON.parse(localRaw) : [];
+    localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify([standardOrder, ...existing]));
+  } catch (e) {
+    console.error('Failed to cache order locally:', e);
+  }
+
+  // 3. Dispatch Email notification via FormSubmit
+  if (settings.notificationEmail && settings.notificationEmail.includes('@')) {
+    sendOrderNotificationEmail(standardOrder, settings.notificationEmail).catch(err => {
+      console.warn('Email dispatch error:', err);
     });
-    localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
-    return updated;
-  } catch (e) {
-    return null;
   }
+
+  return standardOrder;
 };
 
-export const deleteOrder = (orderId) => {
+// Toggle status between active and done in Supabase
+export const toggleOrderStatus = async (orderId, currentStatus) => {
+  const newStatus = currentStatus === 'active' ? 'done' : 'active';
+
   try {
-    const orders = getOrders();
-    const updated = orders.filter(order => order.id !== orderId);
-    localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
-    return updated;
-  } catch (e) {
-    return null;
+    await supabase
+      .from('flower_orders')
+      .update({ status: newStatus })
+      .eq('id', orderId);
+  } catch (err) {
+    console.warn('Supabase status update error:', err);
   }
+
+  // Update local cache
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY_ORDERS);
+    if (localRaw) {
+      const orders = JSON.parse(localRaw);
+      const updated = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
+      return updated;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return await getOrders();
+};
+
+// Delete order from Supabase
+export const deleteOrder = async (orderId) => {
+  try {
+    await supabase
+      .from('flower_orders')
+      .delete()
+      .eq('id', orderId);
+  } catch (err) {
+    console.warn('Supabase delete error:', err);
+  }
+
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY_ORDERS);
+    if (localRaw) {
+      const orders = JSON.parse(localRaw);
+      const updated = orders.filter(o => o.id !== orderId);
+      localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
+      return updated;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return await getOrders();
 };
 
 // Send real email notification using FormSubmit
@@ -195,7 +243,7 @@ export const sendOrderNotificationEmail = async (order, targetEmail) => {
   }
 };
 
-// Simple Password Auth
+// Authentication state helpers
 export const checkAdminAuth = () => {
   try {
     return localStorage.getItem(STORAGE_KEY_AUTH) === 'authenticated';
