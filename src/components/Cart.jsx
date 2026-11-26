@@ -81,7 +81,8 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCl
 
   // Build WhatsApp confirmation link
   const settings = getSettings();
-  const cleanStorePhone = (settings.storePhone || '94770000000').replace(/[^0-9]/g, '');
+  const rawStorePhone = settings.storePhone && settings.storePhone !== '+94770000000' ? settings.storePhone : '+94715522773';
+  const cleanStorePhone = rawStorePhone.replace(/[^0-9]/g, '');
   const waText = completedOrder 
     ? encodeURIComponent(
         `Hi The Rose Co.! 🌸 I just placed pre-order #${completedOrder.id} on your website for LKR ${completedOrder.total.toLocaleString()} on ${completedOrder.deliveryDate}.\n` +

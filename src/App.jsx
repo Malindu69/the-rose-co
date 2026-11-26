@@ -130,12 +130,25 @@ function App() {
             <div className="footer-brand">
               <img src="/logo.png" alt="The Rose Co." className="footer-logo-img" />
               <p>Bespoke custom flower bouquets, curated pre-orders &amp; free voice keepsake gifts.</p>
+              <div style={{ marginTop: '14px' }}>
+                <a 
+                  href="https://wa.me/94715522773" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#25d366', fontWeight: 600, textDecoration: 'none', fontSize: '0.95rem' }}
+                >
+                  💬 WhatsApp: 071 552 2773
+                </a>
+              </div>
             </div>
             <div className="footer-links">
               <a href="#bouquets">Browse Bouquets</a>
               <a onClick={() => navigateTo('builder')} style={{cursor:'pointer'}}>Custom Builder</a>
               <a href="#stems">Single Stems</a>
               <a href="#voice-experience">Voice QR 🎵</a>
+              <a href="https://wa.me/94715522773" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366' }}>
+                💬 Chat on WhatsApp
+              </a>
             </div>
             <div className="footer-copy">
               <p>© {new Date().getFullYear()} The Rose Co. All rights reserved. Handcrafted with love. 💐</p>

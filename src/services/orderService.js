@@ -10,7 +10,7 @@ const STORAGE_KEY_AUTH = 'the_rose_co_admin_auth';
 const DEFAULT_SETTINGS = {
   notificationEmail: '',
   adminPassword: 'roseco2026',
-  storePhone: '+94770000000',
+  storePhone: '+94715522773',
 };
 
 // Map database row to standard frontend order model
@@ -41,7 +41,12 @@ export const getSettings = () => {
       localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
       return DEFAULT_SETTINGS;
     }
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    if (!parsed.storePhone || parsed.storePhone === '+94770000000') {
+      parsed.storePhone = DEFAULT_SETTINGS.storePhone;
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(parsed));
+    }
+    return { ...DEFAULT_SETTINGS, ...parsed };
   } catch (e) {
     return DEFAULT_SETTINGS;
   }
